@@ -27,6 +27,21 @@ module Resque
   include Helpers
   extend self
 
+  class Reloader # :nodoc:
+    def wrap
+      yield
+    end
+  end
+
+  def reloader=(reloader)
+    @reloader = reloader
+  end
+  self.reloader = Reloader.new
+
+  def reloader
+    @reloader
+  end
+
   # Given a Ruby object, returns a string suitable for storage in a
   # queue.
   def encode(object)

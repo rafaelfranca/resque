@@ -241,23 +241,25 @@ module Resque
     end
 
     def work_one_job(job = nil, &block)
-      return false if paused?
-      return false unless job ||= reserve
+      Resque.reloader.wrap do
+        return false if paused?
+        return false unless job ||= reserve
 
-      working_on job
-      procline "Processing #{job.queue} since #{Time.now.to_i} [#{job.payload_class_name}]"
+        working_on job
+        procline "Processing #{job.queue} since #{Time.now.to_i} [#{job.payload_class_name}]"
 
-      log_with_severity :info, "got: #{job.inspect}"
-      job.worker = self
+        log_with_severity :info, "got: #{job.inspect}"
+        job.worker = self
 
-      if fork_per_job?
-        perform_with_fork(job, &block)
-      else
-        perform(job, &block)
+        if fork_per_job?
+          perform_with_fork(job, &block)
+        else
+          perform(job, &block)
+        end
+
+        done_working
+        true
       end
-
-      done_working
-      true
     end
 
     # DEPRECATED. Processes a single job. If none is given, it will
